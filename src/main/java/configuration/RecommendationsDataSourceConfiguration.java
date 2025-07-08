@@ -12,7 +12,7 @@ import javax.sql.DataSource;
 @Configuration
 public class RecommendationsDataSourceConfiguration {
     @Bean(name = "recommendationsDataSource")
-    public DataSource recommendationsDataSource(@Value("${application.recommendations-db.url=spring.datasource.url=jdbc:h2:file:C:/Users/Коленька/Downloads/transaction}") String recommendationsUrl) {
+    public DataSource recommendationsDataSource(@Value("${application.recommendations-db.url}") String recommendationsUrl) {
         var dataSource = new HikariDataSource();
         dataSource.setJdbcUrl(recommendationsUrl);
         dataSource.setDriverClassName("org.h2.Driver");
