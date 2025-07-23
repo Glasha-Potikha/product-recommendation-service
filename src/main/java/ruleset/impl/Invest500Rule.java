@@ -2,39 +2,40 @@ package ruleset.impl;
 
 import dto.RecommendationDto;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Component;
+import repository.RecommendationsRepository;
 import ruleset.RecommendationRuleSet;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 
+@Component
 public class Invest500Rule implements RecommendationRuleSet {
-    private final JdbcTemplate jdbcTemplate;
 
-    public Invest500Rule(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
+    private final RecommendationsRepository repository;
+
+    public Invest500Rule(RecommendationsRepository repository) {
+        this.repository = repository;
     }
 
     @Override
     public Optional<RecommendationDto> getRecommendation(UUID userId) {
-        //1.Есть ли DEBIT
-        Integer debitCount = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM user_product WHERE user_id = ? AND product_type = 'DEBIT'",
-                Integer.class, userId
-        );
-        if (debitCount == null || debitCount == 0) return Optional.empty();
+        // Есть DEBIT
+        if (!repository.hasProductOfType(userId, "DEBIT")) {
+            return Optional.empty();
+        }
 
-        //2.Условие с INVEST
-        Integer investCount = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM user_products WHERE user_id = ? AND product_type = 'INVEST'",
-                Integer.class, userId
-        );
-        if (investCount != null && investCount > 0) return Optional.empty();
+        // Нет INVEST
+        if (repository.hasProductOfType(userId, "INVEST")) {
+            return Optional.empty();
+        }
 
-        //3. Что SAVING > 1000
-        Double savingTopups = jdbcTemplate.queryForObject(
-                "SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE user_id = ? AND product_type = 'SAVING' AND transaction_type = 'INCOMING'",
-                Double.class, userId);
-        if (savingTopups <= 1000) return Optional.empty();
+        // Пополнения по SAVING > 1000
+        BigDecimal savingDeposits = repository.getSumOfDeposits(userId, "SAVING");
+        if (savingDeposits.compareTo(BigDecimal.valueOf(1000)) <= 0) {
+            return Optional.empty();
+        }
 
         return Optional.of(new RecommendationDto(
                 UUID.fromString("147f6a0f-3b91-413b-ab99-87f081d60d5a"),
@@ -43,5 +44,6 @@ public class Invest500Rule implements RecommendationRuleSet {
         ));
     }
 }
+
 
 

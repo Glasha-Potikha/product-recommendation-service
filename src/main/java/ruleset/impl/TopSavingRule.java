@@ -3,55 +3,48 @@ package ruleset.impl;
 import dto.RecommendationDto;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
+import repository.RecommendationsRepository;
 import ruleset.RecommendationRuleSet;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 
 @Component
 public class TopSavingRule implements RecommendationRuleSet {
-    private final JdbcTemplate jdbcTemplate;
 
-    public TopSavingRule(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
+    private final RecommendationsRepository repository;
+
+    public TopSavingRule(RecommendationsRepository repository) {
+        this.repository = repository;
     }
 
     @Override
     public Optional<RecommendationDto> getRecommendation(UUID userId) {
-        //условие с использованием DEBIT, хотя бы раз
-        Integer debitCount = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM user_products WHERE user_id = ? AND product_type = 'DEBIT'",
-                Integer.class, userId
-        );
-        if (debitCount == null || debitCount == 0) return Optional.empty();
+        // Есть DEBIT
+        if (!repository.hasProductOfType(userId, "DEBIT")) {
+            return Optional.empty();
+        }
 
-//условие с суммой пополнений
-        Double debitTopups = jdbcTemplate.queryForObject(
-                "SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE user_id = ? AND product_type = 'DEBIT' AND transaction_type = 'INCOMING'",
-                Double.class, userId);
-        Double savingTopups = jdbcTemplate.queryForObject(
-                "SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE user_id = ? AND product_type = 'SAVING' AND transaction_type = 'INCOMING'",
-                Double.class, userId);
-        if ((debitTopups < 50000) && (savingTopups < 50000)) return Optional.empty();
-//условие Сумма пополнений больше, чем сумма трат по DEBIT
-        Double debitExpenses = jdbcTemplate.queryForObject(
-                "SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE user_id = ? AND product_type = 'DEBIT' AND transaction_type = 'OUTGOING'",
-                Double.class, userId);
-        if (debitTopups <= debitExpenses) return Optional.empty();
+        // (DEBIT пополнения >= 50k) ИЛИ (SAVING пополнения >= 50k)
+        BigDecimal debitDeposits = repository.getSumOfDeposits(userId, "DEBIT");
+        BigDecimal savingDeposits = repository.getSumOfDeposits(userId, "SAVING");
+
+        if (debitDeposits.compareTo(BigDecimal.valueOf(50_000)) < 0 &&
+                savingDeposits.compareTo(BigDecimal.valueOf(50_000)) < 0) {
+            return Optional.empty();
+        }
+
+        // Пополнения по DEBIT > трат
+        BigDecimal debitWithdrawals = repository.getSumOfWithdrawals(userId, "DEBIT");
+        if (debitDeposits.compareTo(debitWithdrawals) <= 0) {
+            return Optional.empty();
+        }
+
         return Optional.of(new RecommendationDto(
                 UUID.fromString("59efc529-2fff-41af-baff-90ccd7402925"),
                 "Top Saving",
-                "Откройте свою собственную «Копилку» с нашим банком! «Копилка» — это уникальный банковский инструмент, который поможет вам легко и удобно накапливать деньги на важные цели. Больше никаких забытых чеков и потерянных квитанций — всё под контролем!\n" +
-                        "\n" +
-                        "Преимущества «Копилки»:\n" +
-                        "\n" +
-                        "Накопление средств на конкретные цели. Установите лимит и срок накопления, и банк будет автоматически переводить определенную сумму на ваш счет.\n" +
-                        "\n" +
-                        "Прозрачность и контроль. Отслеживайте свои доходы и расходы, контролируйте процесс накопления и корректируйте стратегию при необходимости.\n" +
-                        "\n" +
-                        "Безопасность и надежность. Ваши средства находятся под защитой банка, а доступ к ним возможен только через мобильное приложение или интернет-банкинг.\n" +
-                        "\n" +
-                        "Начните использовать «Копилку» уже сегодня и станьте ближе к своим финансовым целям!"
+                "Откройте свою собственную «Копилку» с нашим банком! ..."
         ));
     }
 }

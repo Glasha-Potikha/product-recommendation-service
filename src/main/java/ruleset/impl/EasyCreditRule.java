@@ -3,37 +3,41 @@ package ruleset.impl;
 import dto.RecommendationDto;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
+import repository.RecommendationsRepository;
 import ruleset.RecommendationRuleSet;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 
 @Component
 public class EasyCreditRule implements RecommendationRuleSet {
-    private final JdbcTemplate jdbcTemplate;
 
-    public EasyCreditRule(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
+    private final RecommendationsRepository repository;
+
+    public EasyCreditRule(RecommendationsRepository repository) {
+        this.repository = repository;
     }
 
     @Override
     public Optional<RecommendationDto> getRecommendation(UUID userId) {
-//условие не использования CREDIT
-        Integer creditCount = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM user_products WHERE user_id = ? AND product_type = 'CREDIT'",
-                Integer.class, userId
-        );
-        if (creditCount != null && creditCount > 0) return Optional.empty();
-        //условие Сумма пополнений больше, чем сумма трат по DEBIT
-        Double debitTopups = jdbcTemplate.queryForObject(
-                "SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE user_id = ? AND product_type = 'DEBIT' AND transaction_type = 'INCOMING'",
-                Double.class, userId);
-        Double debitExpenses = jdbcTemplate.queryForObject(
-                "SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE user_id = ? AND product_type = 'DEBIT' AND transaction_type = 'OUTGOING'",
-                Double.class, userId);
-        if (debitTopups <= debitExpenses) return Optional.empty();
-        //трат больше чем 100000
-        if (debitExpenses <= 100000) return Optional.empty();
+        // Условие: нет CREDIT
+        if (repository.hasProductOfType(userId, "CREDIT")) {
+            return Optional.empty();
+        }
+
+        // Сумма пополнений по DEBIT > суммы трат
+        BigDecimal debitDeposits = repository.getSumOfDeposits(userId, "DEBIT");
+        BigDecimal debitWithdrawals = repository.getSumOfWithdrawals(userId, "DEBIT");
+
+        if (debitDeposits.compareTo(debitWithdrawals) <= 0) {
+            return Optional.empty();
+        }
+
+        // Сумма трат > 100 000
+        if (debitWithdrawals.compareTo(BigDecimal.valueOf(100_000)) <= 0) {
+            return Optional.empty();
+        }
 
         return Optional.of(new RecommendationDto(
                 UUID.fromString("ab138afb-f3ba-4a93-b74f-0fcee86d447f"),
