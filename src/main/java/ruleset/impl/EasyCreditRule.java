@@ -1,7 +1,6 @@
 package ruleset.impl;
 
 import dto.RecommendationDto;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import repository.RecommendationsRepository;
 import ruleset.RecommendationRuleSet;
@@ -22,7 +21,7 @@ public class EasyCreditRule implements RecommendationRuleSet {
     @Override
     public Optional<RecommendationDto> getRecommendation(UUID userId) {
         // Условие: нет CREDIT
-        if (repository.hasProductOfType(userId, "CREDIT")) {
+        if (repository.userHasProductType(userId, "CREDIT")) {
             return Optional.empty();
         }
 

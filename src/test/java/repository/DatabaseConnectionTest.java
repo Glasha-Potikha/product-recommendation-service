@@ -10,7 +10,7 @@ import starBank.example.recomendationService.RecomendationServiceApplication;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(classes = RecomendationServiceApplication.class)
-@ActiveProfiles("test")
+@ActiveProfiles("evaluate")
 public class DatabaseConnectionTest {
 
     @Autowired

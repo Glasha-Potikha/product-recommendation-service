@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 @Repository
-public class RecommendationsRepository {
+public class RecommendationsRepository implements TransactionRepository{
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -16,7 +16,8 @@ public class RecommendationsRepository {
     }
 
     // Проверить, использует ли пользователь продукт типа
-    public boolean hasProductOfType(UUID userId, String productType) {
+    @Override
+    public boolean userHasProductType(UUID userId, String productType) {
         Integer count = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM user_products WHERE user_id = ? AND product_type = ?",
                 Integer.class, userId, productType
@@ -25,6 +26,7 @@ public class RecommendationsRepository {
     }
 
     // Получить сумму пополнений по типу продукта
+    @Override
     public BigDecimal getSumOfDeposits(UUID userId, String productType) {
         return jdbcTemplate.queryForObject(
                 "SELECT COALESCE(SUM(amount), 0) FROM transactions " +
@@ -34,6 +36,7 @@ public class RecommendationsRepository {
     }
 
     // Получить сумму трат по типу продукта
+    @Override
     public BigDecimal getSumOfWithdrawals(UUID userId, String productType) {
         return jdbcTemplate.queryForObject(
                 "SELECT COALESCE(SUM(amount), 0) FROM transactions " +

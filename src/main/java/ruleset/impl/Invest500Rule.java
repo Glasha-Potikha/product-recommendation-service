@@ -1,7 +1,6 @@
 package ruleset.impl;
 
 import dto.RecommendationDto;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import repository.RecommendationsRepository;
 import ruleset.RecommendationRuleSet;
@@ -22,12 +21,12 @@ public class Invest500Rule implements RecommendationRuleSet {
     @Override
     public Optional<RecommendationDto> getRecommendation(UUID userId) {
         // Есть DEBIT
-        if (!repository.hasProductOfType(userId, "DEBIT")) {
+        if (!repository.userHasProductType(userId, "DEBIT")) {
             return Optional.empty();
         }
 
         // Нет INVEST
-        if (repository.hasProductOfType(userId, "INVEST")) {
+        if (repository.userHasProductType(userId, "INVEST")) {
             return Optional.empty();
         }
 

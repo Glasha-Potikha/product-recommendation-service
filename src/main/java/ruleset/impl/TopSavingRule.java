@@ -1,7 +1,6 @@
 package ruleset.impl;
 
 import dto.RecommendationDto;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import repository.RecommendationsRepository;
 import ruleset.RecommendationRuleSet;
@@ -22,7 +21,7 @@ public class TopSavingRule implements RecommendationRuleSet {
     @Override
     public Optional<RecommendationDto> getRecommendation(UUID userId) {
         // Есть DEBIT
-        if (!repository.hasProductOfType(userId, "DEBIT")) {
+        if (!repository.userHasProductType(userId, "DEBIT")) {
             return Optional.empty();
         }
 
