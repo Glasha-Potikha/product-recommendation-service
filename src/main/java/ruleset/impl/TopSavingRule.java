@@ -1,9 +1,9 @@
 package ruleset.impl;
 
 import dto.RecommendationDto;
-import org.springframework.stereotype.Component;
 import repository.RecommendationsRepository;
 import ruleset.RecommendationRuleSet;
+import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.Optional;

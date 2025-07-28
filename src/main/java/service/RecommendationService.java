@@ -2,27 +2,24 @@ package service;
 
 import dto.RecommendationDto;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import ruleset.RecommendationRuleSet;
 
-import java.math.BigDecimal;
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
-    @Service
-    @RequiredArgsConstructor
-    public class RecommendationService {
-        @Autowired
-        private final List<RecommendationRuleSet> rules;
+@Service
+@RequiredArgsConstructor
+public class RecommendationService {
+    private final List<RecommendationRuleSet> rules;
 
-        public List<RecommendationDto> getRecommendationsForUser(UUID userId) {
-            return rules.stream()
-                    .map(rule -> rule.getRecommendation(userId))
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
-                    .toList();
-        }
-
+    public List<RecommendationDto> getRecommendationsForUser(UUID userId) {
+        return rules.stream()
+                .map(r -> r.getRecommendation(userId))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .toList();
     }
+}
 

@@ -1,7 +1,6 @@
 package ruleset.condition;
-
-import lombok.RequiredArgsConstructor;
 import repository.TransactionRepository;
+import lombok.RequiredArgsConstructor;
 
 import java.util.UUID;
 

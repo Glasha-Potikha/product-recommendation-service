@@ -1,7 +1,6 @@
 package configuration;
 
 import com.zaxxer.hikari.HikariDataSource;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,18 +11,23 @@ import javax.sql.DataSource;
 @Configuration
 public class RecommendationsDataSourceConfiguration {
     @Bean(name = "recommendationsDataSource")
-    public DataSource recommendationsDataSource(@Value("${application.recommendations-db.url}") String recommendationsUrl) {
-        var dataSource = new HikariDataSource();
-        dataSource.setJdbcUrl(recommendationsUrl);
-        dataSource.setDriverClassName("org.h2.Driver");
-        dataSource.setReadOnly(true);
-        return dataSource;
+    public DataSource recommendationsDataSource(
+            @Value("${application.recommendations-db.url}") String recommendationsUrl,
+            @Value("${application.recommendations-db.pool-size:10}") int poolSize) {
+        HikariDataSource ds = new HikariDataSource();
+        // добавил еще дополнительные параметры для пула соединений
+        ds.setJdbcUrl(recommendationsUrl);
+        ds.setDriverClassName("org.h2.Driver");
+        ds.setReadOnly(true);
+        ds.setMaximumPoolSize(poolSize);
+        ds.setConnectionTimeout(30000);
+        ds.setIdleTimeout(600000);
+        ds.setMaxLifetime(1800000);
+        return ds;
     }
 
     @Bean(name = "recommendationsJdbcTemplate")
-    public JdbcTemplate recommendationsJdbcTemplate(
-            @Qualifier("recommendationsDataSource") DataSource dataSource
-    ) {
-        return new JdbcTemplate(dataSource);
+    public JdbcTemplate recommendationsJdbcTemplate(DataSource recommendationsDataSource) {
+        return new JdbcTemplate(recommendationsDataSource);
     }
 }

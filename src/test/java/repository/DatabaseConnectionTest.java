@@ -5,11 +5,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
-import starBank.example.recomendationService.RecomendationServiceApplication;
+import starBank.example.recomendationService.RecommendationServiceApplication;
+
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest(classes = RecomendationServiceApplication.class)
+@SpringBootTest(classes = RecommendationServiceApplication.class)
 @ActiveProfiles("evaluate")
 public class DatabaseConnectionTest {
 

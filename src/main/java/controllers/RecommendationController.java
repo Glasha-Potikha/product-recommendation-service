@@ -1,15 +1,10 @@
 package controllers;
 
-
-import dto.RecommendationDto;
-import dto.RecommendationResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import service.RecommendationService;
+import dto.RecommendationDto;
 
 import java.util.List;
 import java.util.UUID;
@@ -18,15 +13,14 @@ import java.util.UUID;
 @RequestMapping("/recommendation")
 @RequiredArgsConstructor
 public class RecommendationController {
-
     private final RecommendationService recommendationService;
 
-    @GetMapping("/{user_id}")
-    public ResponseEntity<RecommendationResponse> getRecommendations(@PathVariable("user_id") UUID userId) {
-        List<RecommendationDto> recommendations = recommendationService.getRecommendationsForUser(userId);
-        return ResponseEntity.ok(new RecommendationResponse(userId, recommendations));
+    @GetMapping("/{userId}")
+    public ResponseEntity<RecommendationResponse> getRecommendations(
+            @PathVariable UUID userId) {
+        List<RecommendationDto> recs = recommendationService.getRecommendationsForUser(userId);
+        return ResponseEntity.ok(new RecommendationResponse(userId, recs));
     }
 
-    record RecommendationResponse(UUID user_id, List<RecommendationDto> recommendations) {}
+    public record RecommendationResponse(UUID userId, List<RecommendationDto> recommendations) {}
 }
-
