@@ -33,21 +33,24 @@ public class TextRuleParser {
 
     private Condition parseSingleCondition(String text) {
         text = text.trim();
+
         if (text.endsWith("_EXISTS")) {
             String type = text.replace("_EXISTS", "");
             return new ProductExistsCondition(repository, type, true);
-        } else if (text.endsWith("_NOT_EXISTS")) {
+        }
+        if (text.endsWith("_NOT_EXISTS")) {
             String type = text.replace("_NOT_EXISTS", "");
             return new ProductExistsCondition(repository, type, false);
-        } else if (text.matches(".*(>|>=|<|<=).*")) {
+        }
+        if (text.matches(".*(>|>=|<|<=).*")) {
             String[] parts = text.split("(>=|<=|>|<)");
             String left = parts[0].trim();
             String comparator = text.replaceAll("[^><=]", "");
             BigDecimal value = new BigDecimal(parts[1].trim());
-
             String[] tokens = left.split("_");
             return new TransactionSumCondition(repository, tokens[0], tokens[1], value, comparator);
         }
+
         throw new IllegalArgumentException("Незнакомое правило: " + text);
     }
 }
