@@ -9,6 +9,34 @@ spring:
       idle-timeout: 600000
       max-lifetime: 1800000
       maximum-pool-size: 10
+    url: jdbc:h2:file:./transaction
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+    read-only: true
+
+  # Вот здесь конфигурация для второй БД (PostgreSQL)
+  secondary-datasource:
+    url: jdbc:postgresql://localhost:5432/rules_db
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      pool-name: RulesPool
+      maximum-pool-size: 5
+      connection-timeout: 30000
+
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    enabled: true
+    default-schema: public
+
   jackson:
     serialization:
       write-dates-as-timestamps: false
@@ -19,24 +47,36 @@ management:
   endpoints:
     web:
       exposure:
-        include: health, metrics, prometheus
+        include: health, metrics, prometheus, liquibase
   endpoint:
     health:
       show-details: always
+      db:
+        enabled: true
+      diskspace:
+        enabled: true
     metrics:
       enabled: true
     prometheus:
+      enabled: true
+    liquibase:
       enabled: true
 
 application:
   recommendations-db:
     url: jdbc:h2:file:./transaction
     pool-size: 10
+  rules-db:
+    url: jdbc:postgresql://localhost:5432/rules_db
+    pool-size: 5
 
 logging:
   level:
     root: INFO
     org.springframework.web: INFO
     com.zaxxer.hikari: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type: TRACE
     repository: DEBUG
     service: DEBUG
+    liquibase: INFO
