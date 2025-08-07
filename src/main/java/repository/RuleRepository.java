@@ -12,13 +12,14 @@ import java.util.UUID;
 @Repository
 public interface RuleRepository extends JpaRepository<RecommendationRule, UUID> {
 
-
     List<RecommendationRule> findByProductId(UUID productId);
+
+    boolean existsByProductId(UUID productId);
 
     boolean existsByProductName(String productName);
 
     @Query("SELECT r FROM RecommendationRule r JOIN r.conditions c WHERE c.query = :queryType")
     List<RecommendationRule> findByConditionQueryType(@Param("queryType") String queryType);
 
-    Long deleteByProductId(UUID productId);
+    void deleteByProductId(UUID productId);
 }

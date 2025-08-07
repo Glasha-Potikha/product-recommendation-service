@@ -7,6 +7,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import starBank.example.recomendationService.RecommendationServiceApplication;
 
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -19,8 +20,15 @@ public class DatabaseConnectionTest {
 
     @Test
     void testSelectFromUsers() {
-        Integer count = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM users", Integer.class);
-        System.out.println("User count: " + count);
-        assertNotNull(count);
+
+        Optional<Integer> count = Optional.ofNullable(
+                jdbcTemplate.queryForObject(
+                        "SELECT COUNT(*) FROM users",
+                        Integer.class
+                )
+        );
+
+        System.out.println("User count: " + count.orElse(0));
+        assertTrue(count.isPresent());
     }
 }

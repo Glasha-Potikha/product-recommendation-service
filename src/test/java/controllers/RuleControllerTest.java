@@ -144,22 +144,22 @@ public class RuleControllerTest {
 
     @Test
     void shouldDeleteRule_Success() throws Exception {
-        doNothing().when(ruleService).deleteRule(TEST_RULE_ID);
+        doNothing().when(ruleService).deleteByProductId(TEST_RULE_ID);
 
         mockMvc.perform(delete("/api/rules/{ruleId}", TEST_RULE_ID))
                 .andExpect(status().isOk());
 
-        verify(ruleService, times(1)).deleteRule(TEST_RULE_ID);
+        verify(ruleService, times(1)).deleteByProductId(TEST_RULE_ID);
     }
 
     @Test
     void shouldDeleteRule_NotFound() throws Exception {
         doThrow(new RuleNotFoundException("Rule not found"))
-                .when(ruleService).deleteRule(TEST_RULE_ID);
+                .when(ruleService).deleteByProductId(TEST_RULE_ID);
 
         mockMvc.perform(delete("/api/rules/{ruleId}", TEST_RULE_ID))
                 .andExpect(status().isNotFound());
 
-        verify(ruleService, times(1)).deleteRule(TEST_RULE_ID);
+        verify(ruleService, times(1)).deleteByProductId(TEST_RULE_ID);
     }
 }

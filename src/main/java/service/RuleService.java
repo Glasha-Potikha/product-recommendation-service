@@ -7,6 +7,7 @@ import exceptions.RuleNotFoundException;
 import lombok.RequiredArgsConstructor;
 import model.RecommendationRule;
 import model.RuleCondition;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import repository.RuleRepository;
@@ -15,24 +16,20 @@ import ruleset.condition.*;
 
 import java.util.List;
 import java.util.UUID;
-import org.slf4j.Logger;
 
 @Service
 @RequiredArgsConstructor
 public class RuleService {
-
     private static final Logger logger = LoggerFactory.getLogger(RuleService.class);
-
     private final RuleRepository ruleRepository;
     private final TransactionRepository transactionRepository;
 
     // Создать правило
     public RecommendationRule createRule(CreateRuleRequest request) {
-        logger.info("Creating new recommendation rule for product: {}");
+        logger.info("Creating new recommendation rule for product: {}", request.getProductName());
         logger.debug("Request payload: {}", request);
 
         List<RuleCondition> ruleConditions = buildRuleConditions(request.getConditions());
-
         logger.debug("Built {} conditions for rule", ruleConditions.size());
 
         RecommendationRule rule = new RecommendationRule(
@@ -43,30 +40,8 @@ public class RuleService {
         );
 
         RecommendationRule savedRule = ruleRepository.save(rule);
-
         logger.info("Successfully created rule with ID: {}", savedRule.getId());
         return savedRule;
-    }
-
-    private List<RuleCondition> buildRuleConditions(List<ConditionRequest> conditionRequests) {
-        logger.debug("Building RuleCondition entities from {} condition requests", conditionRequests.size());
-
-        return conditionRequests.stream()
-                .map(req -> {
-                    RuleCondition condition = new RuleCondition();
-                    condition.setQuery(req.getType());
-                    condition.setArguments(List.of(
-                            req.getProductType(),
-                            req.getTransactionType(),
-                            req.getThreshold().toString(),
-                            req.getComparator()
-                    ));
-                    condition.setNegate(req.getShouldExist() != null && !req.getShouldExist());
-
-                    logger.debug("Created RuleCondition: type={}, args={}", req.getType(), condition.getArguments());
-                    return condition;
-                })
-                .toList();
     }
 
     // Проверить, подходит ли пользователь под правило
@@ -106,6 +81,7 @@ public class RuleService {
         return recommendations;
     }
 
+    // Получить все правила
     public List<RecommendationRule> getAllRules() {
         logger.debug("Fetching all rules from repository");
 
@@ -115,25 +91,51 @@ public class RuleService {
         return rules;
     }
 
+    // Проверить существование правила по ID
     public boolean ruleExists(UUID ruleId) {
         boolean exists = ruleRepository.existsById(ruleId);
         logger.debug("Rule with ID {} exists: {}", ruleId, exists);
         return exists;
     }
 
-    public void deleteRule(UUID ruleId) {
-        logger.info("Attempting to delete rule with ID: {}", ruleId);
+    // Удалить правило по ID продукта
+    public void deleteRuleByProductId(UUID productId) {
+        logger.info("Attempting to delete rules for product ID: {}", productId);
 
-        if (!ruleRepository.existsById(ruleId)) {
-            logger.warn("Attempt to delete non-existent rule: {}", ruleId);
-            throw new RuleNotFoundException("Rule not found");
+        if (!ruleRepository.existsByProductId(productId)) {
+            logger.warn("No rules found for product ID: {}", productId);
+            throw new RuleNotFoundException("No rules found for this product");
         }
 
-        ruleRepository.deleteById(ruleId);
-        logger.info("Successfully deleted rule with ID: {}", ruleId);
+        ruleRepository.deleteByProductId(productId);
+        logger.info("Successfully deleted rules for product ID: {}", productId);
     }
 
-    // Внутренний метод: построение дерева условий
+    // ===== Вспомогательные методы =====
+
+    // Построение условий правила из DTO
+    private List<RuleCondition> buildRuleConditions(List<ConditionRequest> conditionRequests) {
+        logger.debug("Building RuleCondition entities from {} condition requests", conditionRequests.size());
+
+        return conditionRequests.stream()
+                .map(req -> {
+                    RuleCondition condition = new RuleCondition();
+                    condition.setQuery(req.getType());
+                    condition.setArguments(List.of(
+                            req.getProductType(),
+                            req.getTransactionType(),
+                            req.getThreshold().toString(),
+                            req.getComparator()
+                    ));
+                    condition.setNegate(req.getShouldExist() != null && !req.getShouldExist());
+
+                    logger.debug("Created RuleCondition: type={}, args={}", req.getType(), condition.getArguments());
+                    return condition;
+                })
+                .toList();
+    }
+
+    // Построение дерева условий (для внутреннего использования)
     private List<Condition> buildConditions(List<ConditionRequest> conditionRequests) {
         logger.debug("Building Condition tree from {} condition requests", conditionRequests.size());
         return conditionRequests.stream()
@@ -141,6 +143,7 @@ public class RuleService {
                 .toList();
     }
 
+    // Преобразование DTO условия в объект Condition
     private Condition mapToCondition(ConditionRequest req) {
         logger.debug("Mapping condition request: type={}, productType={}", req.getType(), req.getProductType());
 
@@ -164,5 +167,9 @@ public class RuleService {
                 throw new IllegalArgumentException("Unknown condition type: " + req.getType());
             }
         };
+    }
+
+    public void deleteByProductId(UUID testRuleId) {
+
     }
 }

@@ -31,6 +31,12 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+            <version>3.2.1</version>
+        </dependency>
+
         <!-- springdoc-openapi UI (Swagger) -->
         <dependency>
                  <groupId>org.springdoc</groupId>

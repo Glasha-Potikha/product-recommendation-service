@@ -63,10 +63,16 @@ public class RuleController {
     }
 
     //  Удалить правило
-    @DeleteMapping("/{ruleId}")
-    public ResponseEntity<Void> deleteRule(@PathVariable UUID ruleId) {
+    @DeleteMapping("/by-product/{productId}")
+    @Operation(summary = "Удалить правило по product_id",
+            description = "Удаляет все правила рекомендаций для указанного продукта")
+    @ApiResponse(responseCode = "200", description = "Правила успешно удалены")
+    @ApiResponse(responseCode = "404", description = "Правила для данного продукта не найдены")
+    public ResponseEntity<Void> deleteRuleByProductId(
+            @Parameter(description = "ID продукта", example = "ab138afb-f3ba-4a93-b74f-0fcee86d447f")
+            @PathVariable UUID productId) {
         try {
-            ruleService.deleteRule(ruleId);
+            ruleService.deleteRuleByProductId(productId);
             return ResponseEntity.ok().build();
         } catch (RuleNotFoundException e) {
             return ResponseEntity.notFound().build();

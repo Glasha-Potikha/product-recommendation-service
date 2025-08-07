@@ -153,7 +153,7 @@ public class RuleServiceTest {
         when(ruleRepository.existsById(TEST_RULE_ID)).thenReturn(true);
         doNothing().when(ruleRepository).deleteById(TEST_RULE_ID);
 
-        assertDoesNotThrow(() -> ruleService.deleteRule(TEST_RULE_ID));
+        assertDoesNotThrow(() -> ruleService.deleteByProductId(TEST_RULE_ID));
         verify(ruleRepository, times(1)).deleteById(TEST_RULE_ID);
     }
 
@@ -161,7 +161,7 @@ public class RuleServiceTest {
     void shouldDeleteRule_ThrowExceptionWhenNotFound() {
         when(ruleRepository.existsById(TEST_RULE_ID)).thenReturn(false);
 
-        assertThrows(RuleNotFoundException.class, () -> ruleService.deleteRule(TEST_RULE_ID));
+        assertThrows(RuleNotFoundException.class, () -> ruleService.deleteByProductId(TEST_RULE_ID));
         verify(ruleRepository, never()).deleteById(any());
     }
 }
