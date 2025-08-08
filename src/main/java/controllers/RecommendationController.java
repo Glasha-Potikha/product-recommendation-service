@@ -1,6 +1,7 @@
 package controllers;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import service.RecommendationService;
 import dto.RecommendationDto;
@@ -15,10 +16,11 @@ public class RecommendationController {
     private final RecommendationService recommendationService;
 
     @GetMapping("/{userId}")
+    @ResponseStatus(HttpStatus.OK)
     public RecommendationResponse getRecommendations(@PathVariable UUID userId) {
         List<RecommendationDto> recs = recommendationService.getRecommendationsForUser(userId);
         return new RecommendationResponse(userId, recs);
     }
 
-    public record RecommendationResponse(UUID userId, List<RecommendationDto> recommendations) {}
+    record RecommendationResponse(UUID userId, List<RecommendationDto> recommendations) {}
 }
