@@ -1,16 +1,18 @@
 package service;
 
 import dto.RecommendationDto;
-import ruleset.RecommendationRuleSet;
+import model.RecommendationRule;
+import model.RuleCondition;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
+import repository.RuleRepository;
+import repository.TransactionRepository;
+import ruleset.condition.Condition;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -18,45 +20,63 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class RecommendationServiceTest {
-    @Mock
-    private RecommendationRuleSet rule1;
 
     @Mock
-    private RecommendationRuleSet rule2;
+    private RuleRepository ruleRepository;
+
+    @Mock
+    private TransactionRepository transactionRepository;
+
+    @Mock
+    private RuleStatService ruleStatService;
 
     @InjectMocks
-    private RecommendationService service;
+    private RecommendationService recommendationService;
 
     @Test
     void testRecommendationReturnedIfPresent() {
-        // Устанавливаем мокирован. правила в сервис!!!!
-        service = new RecommendationService(Arrays.asList(rule1, rule2));
 
-        UUID id = UUID.randomUUID();
-        RecommendationDto dto = new RecommendationDto(id, "Test", "Text");
+        // 1. Подготовка тестовых данных
+        UUID userId = UUID.randomUUID();
+        UUID ruleId = UUID.randomUUID();
 
-        when(rule1.getRecommendation(id)).thenReturn(Optional.of(dto));
-        when(rule2.getRecommendation(id)).thenReturn(Optional.empty());
+        RecommendationRule rule = new RecommendationRule();
+        rule.setId(ruleId);
+        rule.setProductName("Test Product");
+        rule.setProductText("Recommended for you");
 
-        List<RecommendationDto> res = service.getRecommendationsForUser(id);
+        RuleCondition condition = new RuleCondition();
+        // Настройка condition по необходимости
 
-        assertEquals(1, res.size());
-        assertEquals("Test", res.get(0).getName());
-        assertEquals(id, res.get(0).getId());
+        // 2. Мокирование поведения
+        when(ruleRepository.findAll()).thenReturn(Arrays.asList(rule));
+        when(condition.toCondition(transactionRepository)).thenReturn(mock(Condition.class));
+        when(condition.toCondition(transactionRepository).evaluate(userId)).thenReturn(true);
+
+        // 3. Вызов тестируемого метода
+        List<RecommendationDto> result = recommendationService.getRecommendationsForUser(userId);
+
+        // 4. Проверки
+        assertEquals(1, result.size());
+        assertEquals("Test Product", result.get(0).getProductName());
+        assertEquals(ruleId, result.get(0).getProductId());
+
+        // Проверяем, что статистика обновляется
+        verify(ruleStatService).incrementCounter(ruleId);
     }
 
     @Test
     void testEmptyListWhenNoRecommendations() {
-        // Устанавливаем мокирован. правила в сервис !!! обратить внимание
-        service = new RecommendationService(Arrays.asList(rule1, rule2));
+        // 1. Подготовка
+        UUID userId = UUID.randomUUID();
 
-        UUID id = UUID.randomUUID();
+        // 2. Мокирование - нет подходящих правил
+        when(ruleRepository.findAll()).thenReturn(Arrays.asList());
 
-        when(rule1.getRecommendation(id)).thenReturn(Optional.empty());
-        when(rule2.getRecommendation(id)).thenReturn(Optional.empty());
+        // 3. Вызов
+        List<RecommendationDto> result = recommendationService.getRecommendationsForUser(userId);
 
-        List<RecommendationDto> res = service.getRecommendationsForUser(id);
-
-        assertTrue(res.isEmpty());
+        // 4. Проверка
+        assertTrue(result.isEmpty());
     }
 }

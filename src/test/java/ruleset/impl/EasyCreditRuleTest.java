@@ -14,7 +14,6 @@ import static org.junit.jupiter.api.Assertions.*;
 class EasyCreditRuleTest {
 
     // Тест когда пользователь не подходит!
-
     @Test
     void whenUserHasCredit_noRecommendation() {
         RecommendationsRepository repo = mock(RecommendationsRepository.class);
@@ -26,7 +25,6 @@ class EasyCreditRuleTest {
     }
 
     // Тест когда пользователь подходит!
-
     @Test
     void whenEligible_returnsRecommendation() {
         RecommendationsRepository repo = mock(RecommendationsRepository.class);
@@ -39,6 +37,7 @@ class EasyCreditRuleTest {
         Optional<RecommendationDto> opt = rule.getRecommendation(id);
 
         assertTrue(opt.isPresent());
-        assertEquals("Простой кредит", opt.get().getName());
+        // Исправлено: используем getProductName() вместо getName()
+        assertEquals("Простой кредит", opt.get().getProductName());
     }
 }

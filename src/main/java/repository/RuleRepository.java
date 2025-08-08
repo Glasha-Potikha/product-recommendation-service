@@ -1,6 +1,7 @@
 package repository;
 
 import model.RecommendationRule;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -22,4 +23,8 @@ public interface RuleRepository extends JpaRepository<RecommendationRule, UUID> 
     List<RecommendationRule> findByConditionQueryType(@Param("queryType") String queryType);
 
     void deleteByProductId(UUID productId);
+
+    @EntityGraph(attributePaths = {"conditions"})
+    List<RecommendationRule> findAllWithConditions();
 }
+
